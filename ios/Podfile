@@ -23,6 +23,12 @@ target 'DriveTest' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+ pod 'FirebaseCoreInternal', :modular_headers => true
+  pod 'GoogleUtilities', :modular_headers => true
+pod 'FirebaseCore', :modular_headers => true
+  pod 'RNFBApp', :path => '../node_modules/@react-native-firebase/app'
+  pod 'RNFBMessaging', :path => '../node_modules/@react-native-firebase/messaging'
+
   target 'DriveTestTests' do
     inherit! :complete
     # Pods for testing

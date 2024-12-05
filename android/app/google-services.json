@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "116205312021",
+    "project_id": "testdrive-afbe6",
+    "storage_bucket": "testdrive-afbe6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116205312021:android:52ded9671a3ce516ce561c",
+        "android_client_info": {
+          "package_name": "com.DriveTest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu-YXL14ZBsAd4CX1dxPEgh9TslRVmX_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116205312021:android:47dea42ea599915bce561c",
+        "android_client_info": {
+          "package_name": "com.drivetest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu-YXL14ZBsAd4CX1dxPEgh9TslRVmX_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116205312021:android:82bf46601065a375ce561c",
+        "android_client_info": {
+          "package_name": "com.testdrive"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu-YXL14ZBsAd4CX1dxPEgh9TslRVmX_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

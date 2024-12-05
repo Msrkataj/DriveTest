@@ -1,6 +1,8 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+def hermesEnabled = project.hasProperty('hermesEnabled') && project.hermesEnabled.toBoolean()
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -53,6 +55,9 @@ react {
     /* Autolinking */
     autolinkLibrariesWithApp()
 }
+project.ext.react = [
+        enableHermes: true,  // Włącz Hermes
+]
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
@@ -79,19 +84,30 @@ android {
 
     namespace "com.drivetest"
     defaultConfig {
+        missingDimensionStrategy 'store', 'play'
+        multiDexEnabled true
         applicationId "com.drivetest"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
     }
     signingConfigs {
-        debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
-        }
+      debug {
+             storeFile file(MYAPP_UPLOAD_STORE_FILE)
+             storePassword MYAPP_UPLOAD_STORE_PASSWORD
+             keyAlias MYAPP_UPLOAD_KEY_ALIAS
+             keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+         }
+         release {
+             storeFile file(MYAPP_UPLOAD_STORE_FILE)
+             storePassword MYAPP_UPLOAD_STORE_PASSWORD
+             keyAlias MYAPP_UPLOAD_KEY_ALIAS
+             keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+         }
     }
     buildTypes {
         debug {
@@ -105,15 +121,27 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    lintOptions {
+        abortOnError false
+        checkReleaseBuilds false
+    }
 }
 
+
 dependencies {
-    // The version of react-native is set by the React Native Gradle Plugin
+    implementation 'com.android.billingclient:billing:5.0.0'
     implementation("com.facebook.react:react-android")
+    implementation platform('com.google.firebase:firebase-bom:33.5.1')
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation("com.facebook.react:hermes-android")
 
     if (hermesEnabled.toBoolean()) {
-        implementation("com.facebook.react:hermes-android")
+        implementation("com.facebook.react:hermes-android:0.76.3") // Sprawdź najnowszą wersję
     } else {
         implementation jscFlavor
     }
 }
+
+
+
+apply plugin: 'com.google.gms.google-services'
