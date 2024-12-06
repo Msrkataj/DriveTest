@@ -121,10 +121,10 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
-    lintOptions {
-        abortOnError false
-        checkReleaseBuilds false
-    }
+//    lintOptions {
+//        abortOnError false
+//        checkReleaseBuilds false
+//    }
 }
 
 
@@ -142,6 +142,12 @@ dependencies {
     }
 }
 
-
-
 apply plugin: 'com.google.gms.google-services'
+
+afterEvaluate {
+    if (tasks.findByName("lintDebug")) {
+        tasks.named("lintDebug").configure {
+            dependsOn(":app:copyReactNativeVectorIconFonts")
+        }
+    }
+}

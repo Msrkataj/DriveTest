@@ -9,22 +9,33 @@ export const DateAvailabilityProvider = ({ children }) => {
     const [dateStatuses, setDateStatuses] = useState({});
     const [userData, setUserData] = useState(null);
 
-    const currentTaskIdRef = useRef(null);
     const isFetchingRef = useRef(false);
     const nextFetchTimeRef = useRef(0);
+    const intervalIdRef = useRef(null); // Przechowuje identyfikator interwału
 
     // Function to check if fetching is allowed
     const canFetchDateAvailability = useCallback(() => {
         const now = Date.now();
+        console.log('Sprawdzam warunki canFetchDateAvailability:');
+        console.log('isFetchingRef.current:', isFetchingRef.current); // Powinno być false po zakończeniu
+        console.log('nextFetchTimeRef.current:', nextFetchTimeRef.current, 'Teraz:', now); // Powinno być <= now
         const result = !isFetchingRef.current &&
-            !currentTaskIdRef.current &&
             (nextFetchTimeRef.current === 0 || now >= nextFetchTimeRef.current);
-        console.log('canFetchDateAvailability:', result);
+        console.log('Wynik canFetchDateAvailability:', result);
         return result;
     }, []);
 
     // Function to fetch available dates
     const fetchDateAvailability = useCallback(async (overrideTimeLimit = false, forceExecute = false) => {
+        if (intervalIdRef.current) {
+            console.log('Resetowanie interwału');
+            clearInterval(intervalIdRef.current); // Wyczyszczenie istniejącego interwału
+            intervalIdRef.current = setInterval(() => {
+                console.log('Interwał: Próba wywołania fetchDateAvailability');
+                fetchDateAvailability(true); // Wymuś wykonanie w interwale
+            }, 15 * 60 * 1000); // 15 minut
+        }
+
         const now = new Date();
         const hours = now.getHours();
 
@@ -32,7 +43,6 @@ export const DateAvailabilityProvider = ({ children }) => {
             console.log('fetchDateAvailability zablokowane z powodu godzin nocnych');
             return;
         }
-
         console.log('Wywołano fetchDateAvailability');
 
         if (!overrideTimeLimit && !forceExecute && !canFetchDateAvailability()) {
@@ -108,11 +118,7 @@ export const DateAvailabilityProvider = ({ children }) => {
             );
 
             if (startResponse.ok) {
-                const data = await startResponse.json();
-                const taskId = data.taskId;
-
-                currentTaskIdRef.current = taskId; // Zapisz taskId
-                console.log('Zapytanie rozpoczęte, taskId:', taskId);
+                console.log('Zapytanie wysłane pomyślnie.');
             } else {
                 const errorData = await startResponse.json();
                 throw new Error(errorData.message || 'Nie udało się rozpocząć zadania.');
@@ -120,121 +126,31 @@ export const DateAvailabilityProvider = ({ children }) => {
         } catch (error) {
             console.error('Błąd podczas fetchDateAvailability:', error.message);
             setErrorMessage(error.message || 'Wystąpił błąd podczas pobierania dat.');
-            fetchDelay = 5 * 60 * 1000; // Skróć czas do 5 minut w przypadku błędu
         } finally {
-            isFetchingRef.current = false;
+            console.log('Czyszczenie stanu po fetchDateAvailability');
+            isFetchingRef.current = false; // Usuwa blokadę
+            nextFetchTimeRef.current = Date.now() + 15 * 60 * 1000; // Ustaw limit 15 minut
+            console.log('Zaktualizowano nextFetchTimeRef:', nextFetchTimeRef.current);
             setLoading(false);
-
-            // Ustaw czas następnego dozwolonego wywołania
-            nextFetchTimeRef.current = Date.now() + fetchDelay;
         }
     }, [canFetchDateAvailability]);
 
 
-    // Function to check the task status
-    const checkTaskStatus = useCallback((taskId, selectedDates) => {
-        const intervalId = setInterval(async () => {
-            try {
-                const response = await fetch(
-                    `https://drive-test-3bee5c1b0f36.herokuapp.com/taskDate-status/${taskId}`
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-
-                    if (data.status === 'completed') {
-                        console.log('Task completed:', data);
-
-                        const results = data.results || {}; // Assume results is an object with dates and time slots
-                        setDateStatuses((prevStatuses) => {
-                            const updatedStatuses = { ...prevStatuses };
-                            Object.keys(results).forEach((date) => {
-                                if (results[date] && results[date].length > 0) {
-                                    updatedStatuses[date] = {
-                                        status: 'available',
-                                        timeSlots: results[date],
-                                    };
-                                } else {
-                                    updatedStatuses[date] = {
-                                        status: 'unavailable',
-                                        timeSlots: [],
-                                    };
-                                }
-                            });
-                            return updatedStatuses;
-                        });
-
-                        clearInterval(intervalId);
-                        currentTaskIdRef.current = null;
-                    } else if (data.status === 'failed') {
-                        console.log('Task failed:', data);
-
-                        setDateStatuses((prevStatuses) => {
-                            const updatedStatuses = { ...prevStatuses };
-                            selectedDates.forEach((date) => {
-                                updatedStatuses[date] = {
-                                    status: 'unavailable',
-                                    timeSlots: [],
-                                };
-                            });
-                            return updatedStatuses;
-                        });
-
-                        clearInterval(intervalId);
-                        currentTaskIdRef.current = null;
-                    }
-                } else {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to fetch task status.');
-                }
-            } catch (error) {
-                console.error('Error checking task status:', error);
-                clearInterval(intervalId);
-                currentTaskIdRef.current = null;
-            }
-        }, 5000); // Check every 5 seconds
-    }, []);
-
     // Effect to initialize fetching on app start
     useEffect(() => {
-        const isWithinAllowedHours = () => {
-            const now = new Date();
-            const hours = now.getHours();
-            return hours >= 6 && hours < 24; // Zakres godzin od 6:00 do 23:59
-        };
+        console.log('Inicjalizuję efekt dla fetchDateAvailability co 15 minut');
 
-        let intervalId;
-
-        const startInterval = () => {
-            intervalId = setInterval(() => {
-                console.log('Interwał: Próba wywołania fetchDateAvailability');
-
-                if (!isWithinAllowedHours()) {
-                    console.log('fetchDateAvailability zablokowane z powodu nieodpowiednich godzin');
-                    return;
-                }
-
-                if (canFetchDateAvailability()) {
-                    console.log('fetchDateAvailability w interwale');
-                    fetchDateAvailability(true); // Wymuś wykonanie
-                } else {
-                    console.log('fetchDateAvailability zablokowane przez warunek canFetchDateAvailability');
-                }
-            }, 15 * 60 * 1000); // 15 minut
-        };
-
-
-        // Uruchom fetch na starcie, a potem interwał
-        if (canFetchDateAvailability()) {
-            fetchDateAvailability();
-        }
-        startInterval();
+        intervalIdRef.current = setInterval(() => {
+            console.log('Interwał: Próba wywołania fetchDateAvailability');
+            fetchDateAvailability(true); // Wymuś wykonanie w interwale
+        }, 15 * 60 * 1000); // 15 minut
 
         return () => {
             console.log('Czyszczenie interwału');
-            clearInterval(intervalId);
+            clearInterval(intervalIdRef.current); // Wyczyszczenie interwału przy odmontowaniu
         };
-    }, [fetchDateAvailability, canFetchDateAvailability]);
+    }, [fetchDateAvailability]);
+
 
 
 

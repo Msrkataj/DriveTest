@@ -25,6 +25,7 @@ const LoginComponent = () => {
     const navigation = useNavigation();
     const pollingInterval = useRef(null);
     const loadingTimeout = useRef(null);
+    const [licenseInput, setLicenseInput] = useState('');
 
     const messages = [
         'Preparing to validate data...',
@@ -70,6 +71,13 @@ const LoginComponent = () => {
 
         return '';
     };
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setLicenseNumber(licenseInput.toUpperCase());
+        }, 300); // Opóźnienie 300 ms
+
+        return () => clearTimeout(timeoutId); // Czyszczenie poprzedniego timeouta
+    }, [licenseInput]);
 
     const validateApplicationRef = (ref) => {
         const regex = /^\d{8}$/;
@@ -275,8 +283,8 @@ const LoginComponent = () => {
                 <TextInput
                     style={styles.loginInput}
                     placeholder="Type here..."
-                    value={licenseNumber}
-                    onChangeText={(text) => setLicenseNumber(text.toUpperCase())}
+                    value={licenseInput}
+                    onChangeText={(text) => setLicenseInput(text.replace(/[^A-Za-z0-9]/g, ''))}
                 />
                 {errors.licenseNumber && (
                     <Text style={styles.errorMessage}>{errors.licenseNumber}</Text>

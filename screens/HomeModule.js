@@ -261,21 +261,31 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginHorizontal: 20,
         marginTop: 10,
+        color: 'rgba(20, 20, 20, 1)',
+
     },
     topNotificationIcon: {
         width: 30,
         height: 30,
+        color: 'rgba(20, 20, 20, 1)',
+
     },
     topNotificationText: {
         marginLeft: 10,
+        color: 'rgba(20, 20, 20, 1)',
+
         flex: 1,
     },
     topNotificationTitle: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: 'rgba(20, 20, 20, 1)',
+
     },
     topNotificationSubtitle: {
         fontSize: 14,
+        color: '#999',
+
     },
     notifications: {
         flex: 1,
@@ -285,6 +295,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 10,
+        color: 'rgba(20, 20, 20, 1)',
     },
     notification: {
         flexDirection: 'row',
@@ -303,13 +314,15 @@ const styles = StyleSheet.create({
     notificationText: {
         marginLeft: 10,
         flex: 1,
+        color: '#999',
     },
     notificationTitle: {
         fontSize: 14,
+        color: 'rgba(20, 20, 20, 1)',
     },
     notificationDate: {
         fontSize: 12,
-        color: '#999',
+        color: 'grey',
     },
     options: {
         marginBottom: 20,

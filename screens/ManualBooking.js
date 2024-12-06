@@ -30,17 +30,24 @@ const ManualBooking = () => {
     const [availabilityNotifications, setAvailabilityNotifications] = useState([]);
     const navigation = useNavigation();
     const serverUrl = 'https://drive-test-3bee5c1b0f36.herokuapp.com';
+    const [loadingNotifications, setLoadingNotifications] = useState(false); // Nowa flaga
+    const [lastRefreshTime, setLastRefreshTime] = useState(null); // Przechowuje czas ostatniego odświeżenia
+    const [expandedState, setExpandedState] = useState({});
 
 
     useEffect(() => {
-        const updateNotifications = async () => {
-            if (userData && selectedCentres.length > 0) {
-                console.log('Updating notifications...');
-                await fetchNotifications();
+        const intervalId = setInterval(() => {
+            if (userData && selectedCentres.length > 0 && !loadingNotifications) {
+                console.log('Auto-refreshing notifications...');
+                fetchNotifications();
             }
-        };
-        updateNotifications();
-    }, [selectedDates, selectedCentres]);
+        }, 30000); // 30 sekund
+
+        return () => clearInterval(intervalId); // Czyszczenie interwału przy odmontowaniu
+    }, [userData, selectedCentres, loadingNotifications]);
+
+
+
     const formatDateString = (dateString) => {
         if (!dateString || typeof dateString !== 'string') return 'Invalid date';
         const [day, month, year] = dateString.split('/');
@@ -51,21 +58,9 @@ const ManualBooking = () => {
 
     // Funkcja do normalizacji formatu daty do `dd/mm/rr`
     const normalizeDateFormat = (date) => {
-        // Sprawdź, czy `date` jest poprawnym ciągiem znaków
-        if (!date || typeof date !== 'string') {
-            console.error('Invalid date input:', date);
-            return null; // Zwróć `null` dla niepoprawnych danych
-        }
-
+        if (!date) return null;
         const [day, month, year] = date.split('/');
-
-        // Sprawdź, czy wszystkie części daty istnieją
-        if (!day || !month || !year) {
-            console.error('Invalid date structure:', date);
-            return null; // Zwróć `null` dla niekompletnych dat
-        }
-
-        return `${day}/${month}/${year.length === 2 ? year : year.slice(-2)}`;
+        return `${day}/${month}/${year.slice(-2)}`;
     };
 
     const notificationIntervalRef = useRef(null);
@@ -79,7 +74,7 @@ const ManualBooking = () => {
                     }
 
                     if (userData && selectedCentres.length > 0) {
-                        console.log('Fetching notifications...');
+                        console.log('Fetchisng notifications...');
                         await fetchNotifications(); // Pobierz powiadomienia
                     }
                 } catch (error) {
@@ -132,8 +127,21 @@ const ManualBooking = () => {
         }
     };
 
-
     const handleRefresh = async () => {
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000; // 5 minut w milisekundach
+
+        if (lastRefreshTime && now - lastRefreshTime < fiveMinutes) {
+            const remainingTime = Math.ceil((fiveMinutes - (now - lastRefreshTime)) / 1000);
+            Alert.alert(
+                'Too Soon!',
+                `You can refresh again in ${Math.ceil(remainingTime / 60)} minute(s).`
+            );
+            return;
+        }
+
+        setLastRefreshTime(now); // Ustaw czas ostatniego odświeżenia
+
         console.log('handleRefresh called');
         try {
             console.log('Calling fetchDateAvailability with forceExecute...');
@@ -150,17 +158,37 @@ const ManualBooking = () => {
         }
     };
 
+    // const handleRefresh = async () => {
+    //     console.log('handleRefresh called');
+    //     try {
+    //         console.log('Calling fetchDateAvailability with forceExecute...');
+    //         Alert.alert(
+    //             'Dates Updated',
+    //             'Dates are updated, results may appear in a few minutes.',
+    //             [{ text: 'OK' }]
+    //         );
+    //         await fetchDateAvailability(true); // Wymuś wykonanie zapytania
+    //         await fetchNotifications(); // Aktualizuj powiadomienia po odświeżeniu dostępności
+    //     } catch (error) {
+    //         console.error('Error during refresh:', error);
+    //         Alert.alert('Error', 'Failed to refresh availability data.');
+    //     }
+    // };
+
 
     const fetchNotifications = async () => {
         try {
+            setLoadingNotifications(true);
+
             if (!userData || !userData._id || selectedCentres.length === 0) {
                 console.warn('Notifications skipped: Missing userData or selectedCentres');
+                setLoadingNotifications(false);
                 return;
             }
 
             const userId = userData._id;
 
-            // Pobierz powiadomienia z serwera
+            // Pobierz powiadomienia z bazy danych
             const response = await fetch(`${serverUrl}/api/notifications/${userId}`);
             if (!response.ok) {
                 const errorText = await response.text();
@@ -172,51 +200,84 @@ const ManualBooking = () => {
                 throw new Error('Notifications is not an array');
             }
 
+            // Sortuj powiadomienia po dacie w kolejności malejącej
+            const sortedNotifications = notifications.sort(
+                (a, b) => new Date(b.date) - new Date(a.date)
+            );
+
+            // console.log('Pobrane i posortowane powiadomienia:', sortedNotifications);
+
+            // Budowanie mapy powiadomień
             const notificationMap = {};
+            sortedNotifications.forEach((notification) => {
+                const centerName = notification.selectedCentre?.name?.trim().toLowerCase();
+                if (!centerName || !notification.selectedDate) return;
 
-            // Mapowanie powiadomień i grupowanie według centrum
-            notifications.forEach((notification) => {
-                const centerName = notification.selectedCentre?.name;
-                const normalizedDate = normalizeToShortDate(notification.selectedDate);
-
-                if (!normalizedDate || !centerName) return;
-
-                const key = `${centerName}`;
-                if (notification.text.startsWith("No available dates in the center")) {
-                    notificationMap[key] = notification.text; // Przypisz powiadomienie do centrum
-                } else if (!notificationMap[`${normalizedDate}-${centerName}`]) {
-                    notificationMap[`${normalizedDate}-${centerName}`] = notification.text;
-                }
+                notification.selectedDate.forEach((readableDate) => {
+                    const normalizedDate = normalizeToShortDate(readableDate); // Normalizujemy daty w bazie
+                    if (normalizedDate) {
+                        const key = `${normalizedDate}-${centerName}`;
+                        // console.log('Generated key for notificationMap:', key); // Log dla generowanego klucza
+                        if (!notificationMap[key]) {
+                            notificationMap[key] = {
+                                text: notification.text,
+                                availableDates: Array.isArray(notification.availableDates)
+                                    ? notification.availableDates.filter(
+                                        (d) => d.date && d.time // Sprawdź, czy każdy obiekt ma `date` i `time`
+                                    )
+                                    : [],
+                            };
+                        }
+                    }
+                });
             });
 
-            const matchedNotifications = selectedDates.map((dateObj) => {
+            // console.log('Final notificationMap keys:', Object.keys(notificationMap)); // Loguj wszystkie klucze w mapie
+
+            // Dopasowanie powiadomień do każdej daty w `selectedDates`
+            const matchedNotifications = [];
+
+            selectedDates.forEach((dateObj) => {
                 const normalizedDate = normalizeDateFormat(dateObj.date);
-                const centerName = selectedCentres.find((centre) => {
-                    const key = `${centre.name}`;
-                    return notificationMap[key];
-                });
 
-                if (centerName) {
-                    return {
+                selectedCentres.forEach((centre) => {
+                    const centerKey = `${normalizedDate}-${centre.name.trim().toLowerCase()}`;
+                    const notificationData = notificationMap[centerKey];
+
+                    matchedNotifications.push({
                         date: normalizedDate,
-                        text: notificationMap[centerName.name],
-                    };
-                }
-
-                return {
-                    date: normalizedDate,
-                    text: notificationMap[`${normalizedDate}-${centerName?.name}`] || "No notifications",
-                };
+                        text: notificationData ? notificationData.text : 'No notifications',
+                        availableDates: notificationData ? notificationData.availableDates : [],
+                        testCentreName: centre.name
+                    });
+                });
             });
 
             setAvailabilityNotifications(matchedNotifications);
 
-            console.log('Updated notifications:', matchedNotifications);
+
+
+            setAvailabilityNotifications(matchedNotifications);
+
+            // console.log('Dopasowane powiadomienia:', matchedNotifications);
         } catch (error) {
-            console.error('Error fetching notifications:', error);
-            Alert.alert('Error', error.message || 'Failed to fetch notifications.');
+            console.error('Błąd podczas pobierania powiadomień:', error);
+            Alert.alert('Błąd', error.message || 'Nie udało się pobrać powiadomień.');
+        } finally {
+            setLoadingNotifications(false);
         }
     };
+
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (userData && selectedCentres.length > 0) {
+                fetchNotifications();
+            }
+        }, [userData, selectedCentres])
+    );
+
+
 
     const normalizeToShortDate = (readableDate) => {
         if (!readableDate || typeof readableDate !== 'string') {
@@ -230,7 +291,7 @@ const ManualBooking = () => {
         ];
         const monthIndex = monthNames.indexOf(month) + 1; // Znajdź indeks miesiąca
         if (!monthIndex) {
-            console.error('Invalid dmonth in readableDate:', readableDate);
+            console.error('Invalid month in readableDate:', readableDate);
             return null;
         }
         const formattedDay = day.padStart(2, '0');
@@ -240,57 +301,105 @@ const ManualBooking = () => {
     };
 
 
-    const renderDateItem = ({item}) => {
-        const notification = availabilityNotifications.find(
-            (notif) => notif && notif.date === item.date
-        );
 
-        const isLoading =
-            !notification && (!dateStatuses[item.date] || dateStatuses[item.date]?.status === 'loading');
-        const timeSlots = notification ? [notification.text] : item.timeSlots || [];
+    useEffect(() => {
+        // console.log('Current selectedDates:', selectedDates);
+        // console.log('Current selectedCentres:', selectedCentres);
+    }, [selectedDates, selectedCentres]);
 
-        return (
-            <View style={styles.card}>
-                <Text style={styles.centreName}>
-                    {selectedCentres.length > 0
-                        ? selectedCentres[0]?.name || 'Test Centre'
-                        : 'Test Centre'}
-                </Text>
-                <Text style={styles.NameMini}>Test Centre</Text>
 
-                <Text style={styles.date}>{formatDateString(item.date)}</Text>
-                {/*<Text style={styles.NameMini}>Date</Text>*/}
 
-                <Text style={styles.dateFound}>
-                    {isLoading ? (
-                        <ActivityIndicator size="small" color="#007bff"/>
-                    ) : notification ? (
-                        notification.text
-                    ) : (
-                        'Date found: just now'
-                    )}
-                </Text>
+    const renderDateItem = ({ item }) => {
+        return selectedCentres.map((centre, index) => {
+            // Dopasowanie powiadomienia dla danego centrum testowego i daty
+            const notification = availabilityNotifications.find(
+                (notif) =>
+                    notif &&
+                    notif.date === item.date &&
+                    notif.testCentreName?.toLowerCase() === centre.name.toLowerCase()
+            );
 
-                {dateStatuses[item.date]?.status === 'available' && (
-                    <TouchableOpacity
-                        style={styles.bookButton}
-                        onPress={() => {
-                            setSelectedDate(item.date);
-                            setModalVisible(true);
-                        }}
-                    >
-                        <Text style={styles.bookButtonText}>Book now</Text>
-                    </TouchableOpacity>
-                )}
-                {dateStatuses[item.date]?.status === 'unavailable' && (
-                    <Text style={styles.unavailableText}>No available slots at this centre.</Text>
-                )}
-                {dateStatuses[item.date]?.status === 'error' && (
-                    <Text style={styles.errorText}>
-                        Temporary service issue. Availability will be checked in 15 minutes.
+            const isLoading =
+                !notification &&
+                (!dateStatuses[item.date] || dateStatuses[item.date]?.status === 'loading');
+            const expandedKey = `${item.date}-${centre.name}`;
+
+            const isExpanded = expandedState[`${item.date}-${centre.name}`] || false;
+
+            return (
+                <View style={styles.card} key={`${item.date}-${index}`}>
+                    <Text style={styles.centreName}>
+                        {centre.name || 'Test Centre'}
                     </Text>
-                )}
-                    {userData?.isPremium ? ( // Sprawdź, czy użytkownik ma premium
+                    <Text style={styles.NameMini}>Test Centre</Text>
+
+                    <Text style={styles.date}>{formatDateString(item.date)}</Text>
+
+                    <View style={styles.notificationContainer}>
+                        {isLoading ? (
+                            <ActivityIndicator size="small" color="#007bff" />
+                        ) : notification ? (
+                            <>
+                                {/* Tekst powiadomienia na osobnej linii */}
+                                <Text style={styles.notificationText}>{notification.text}</Text>
+
+                                {/* Lista dostępnych terminów */}
+                                {notification.availableDates?.length > 0 && (
+                                    <View>
+                                        {(isExpanded
+                                                ? notification.availableDates
+                                                : notification.availableDates.slice(0, 3)
+                                        ).map((dateObj, index) => (
+                                            <Text key={index} style={styles.dateItem}>
+                                                {`${dateObj.date}, ${dateObj.time}`}
+                                            </Text>
+                                        ))}
+
+                                        {notification.availableDates.length > 3 && (
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    setExpandedState((prevState) => ({
+                                                        ...prevState,
+                                                        [expandedKey]: !isExpanded,
+                                                    }))
+                                                }
+                                                style={styles.expandButton}
+                                            >
+                                                <Text style={styles.expandButtonText}>
+                                                    {isExpanded ? 'Hide' : 'Show more'}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                )}
+                            </>
+                        ) : (
+                            <Text style={styles.noNotificationText}>No notifications</Text>
+                        )}
+                    </View>
+
+                    {dateStatuses[item.date]?.status === 'available' && (
+                        <TouchableOpacity
+                            style={styles.bookButton}
+                            onPress={() => {
+                                setSelectedDate(item.date);
+                                setModalVisible(true);
+                            }}
+                        >
+                            <Text style={styles.bookButtonText}>Book now</Text>
+                        </TouchableOpacity>
+                    )}
+                    {dateStatuses[item.date]?.status === 'unavailable' && (
+                        <Text style={[styles.notificationText, { marginBottom: 8 }]}>
+                            No date found for this date
+                        </Text>
+                    )}
+                    {dateStatuses[item.date]?.status === 'error' && (
+                        <Text style={styles.errorText}>
+                            Temporary service issue. Availability will be checked in 15 minutes.
+                        </Text>
+                    )}
+                    {userData?.isPremium ? (
                         <TouchableOpacity
                             style={styles.bookButtonContainer}
                             onPress={() => {
@@ -309,34 +418,11 @@ const ManualBooking = () => {
                             </Text>
                         </View>
                     )}
-            </View>
-        );
+                </View>
+            );
+        });
     };
 
-
-    useFocusEffect(
-        React.useCallback(() => {
-            const fetchData = async () => {
-                try {
-                    if (!userData) {
-                        await fetchUserData(); // Pobierz dane użytkownika tylko raz
-                    }
-
-                    // Wywołaj fetchNotifications tylko jeśli dane użytkownika są dostępne
-                    if (userData && selectedCentres.length > 0) {
-                        await fetchNotifications();
-                    }
-
-                    // Nie wywołuj fetchDateAvailability automatycznie
-                    console.log('Focus effect completed');
-                } catch (error) {
-                    console.error('Error during data fetch:', error);
-                }
-            };
-
-            fetchData();
-        }, [userData, selectedCentres])
-    );
 
 
     return (
@@ -345,6 +431,8 @@ const ManualBooking = () => {
             keyExtractor={(item, index) => `${item.date}-${index}`}
             renderItem={renderDateItem}
             contentContainerStyle={styles.listContainer}
+            nitialNumToRender={selectedDates.length} // Renderuj wszystkie daty na raz
+            maxToRenderPerBatch={selectedDates.length}
             ListHeaderComponent={() => (
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.navigate('HomeModule')} style={styles.headerButton}>
@@ -408,6 +496,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f9f9f9',
     },
+    notificationContainer: {
+        marginTop: 10,
+    },
+    notificationText: {
+        fontSize: 14,
+        color: '#555',
+        marginBottom: 8, // Dodano odstęp między tekstem a datami
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -419,6 +515,16 @@ const styles = StyleSheet.create({
     },
     headerButton: {
         marginLeft: 10,
+    },
+    expandButton: {
+        marginTop: 5,
+        paddingVertical: 5,
+    },
+    expandButtonText: {
+        color: '#007bff',
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: '600',
     },
     headerTitles: {
         flex: 1,
@@ -441,6 +547,16 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         paddingBottom: 20,
+    },
+    dateItem: {
+        fontSize: 13,
+        color: '#333',
+        marginBottom: 2, // Odstęp między datami
+    },
+
+    noNotificationText: {
+        fontSize: 14,
+        color: '#999', // Kolor tekstu, gdy brak powiadomień
     },
     backButton: {
         position: 'absolute', // Ustaw strzałkę w stałej pozycji
@@ -475,6 +591,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 16,
         textAlign: 'center',
+        color: 'rgba(20, 20, 20, 1)',
     },
     modalButtons: {
         flexDirection: 'row',
@@ -510,7 +627,8 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: '#ffffff',
-        padding: 16,
+        padding: 12,
+        paddingBottom: 40,
         marginVertical: 8,
         marginHorizontal: 8,
         marginBottom: 30,

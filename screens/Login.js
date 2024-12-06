@@ -12,9 +12,8 @@ const LoginPanel = () => {
     const [errors, setErrors] = useState({});
     const navigation = useNavigation();
     const [loading, setLoading] = useState(false);
-    const [debouncedLicenseNumber, setDebouncedLicenseNumber] = useState('');
+    const [licenseInput, setLicenseInput] = useState('');
 
-    // Funkcja walidująca numer prawa jazdy
     const validateLicenseNumber = (number) => {
         if (number.length !== 16) {
             return 'Driving license number must be 16 characters long.';
@@ -30,23 +29,22 @@ const LoginPanel = () => {
 
         return '';
     };
+
     const validateApplicationRef = (ref) => {
-        const regex = /^\d{8}$/; // Walidacja na 8 cyfr
+        const regex = /^\d{8}$/;
         return regex.test(ref);
     };
     useEffect(() => {
-        const handler = setTimeout(() => {
-            setLicenseNumber(debouncedLicenseNumber);
-        }, 100); // 300 ms opóźnienia
+        const timeoutId = setTimeout(() => {
+            setLicenseNumber(licenseInput.toUpperCase());
+        }, 300); // Opóźnienie 300 ms
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [debouncedLicenseNumber])
+        return () => clearTimeout(timeoutId); // Czyszczenie timeouta
+    }, [licenseInput]);
+
     const handleFindTest = async () => {
         const validationErrors = {};
 
-        // Walidacja danych wejściowych
         const licenseValidationError = validateLicenseNumber(licenseNumber);
         if (licenseValidationError) {
             validationErrors.licenseNumber = licenseValidationError;
@@ -75,10 +73,9 @@ const LoginPanel = () => {
                 body: JSON.stringify({ licenseNumber, applicationRef }),
             });
 
-            // Sprawdzenie statusu odpowiedzi
             if (!response.ok) {
                 console.error(`Server Error: ${response.status}`);
-                const errorData = await response.text(); // Pobranie odpowiedzi jako tekst
+                const errorData = await response.text();
                 console.error('Error details:', errorData);
 
                 if (response.status === 404) {
@@ -90,37 +87,29 @@ const LoginPanel = () => {
                 return;
             }
 
-            const data = await response.json(); // Parsowanie JSON
+            const data = await response.json();
             console.log('User data received:', data);
 
-            // Zapisanie danych użytkownika
             await AsyncStorage.setItem('userData', JSON.stringify(data));
 
             const user = data;
 
-            // Logika przekierowywania użytkownika
             if (!user.isPremium) {
-                // Jeśli użytkownik nie jest premium
                 navigation.navigate('OfferSelection');
             } else if (!user.selectedCentres || user.selectedCentres.length === 0) {
-                // Jeśli nie ma wybranych ośrodków testowych
                 navigation.navigate('TestCentres');
             } else if (!user.availability || Object.keys(user.availability).length === 0) {
-                // Jeśli brak dostępnych terminów
                 navigation.navigate('TestDates');
             } else {
-                // W przeciwnym razie (premium, wybrane centra, dostępność)
                 navigation.navigate('HomeModule');
             }
         } catch (error) {
             console.error('Network error:', error);
-            // Obsługa błędów sieciowych
             Alert.alert('Error', 'Failed to fetch data. Please check your connection and try again.');
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <View style={styles.container}>
@@ -136,8 +125,8 @@ const LoginPanel = () => {
                 <TextInput
                     style={styles.loginInput}
                     placeholder="Type here..."
-                    value={licenseNumber}
-                    onChangeText={(text) => setDebouncedLicenseNumber(text.toUpperCase())}
+                    value={licenseInput}
+                    onChangeText={(text) => setLicenseInput(text.replace(/[^A-Za-z0-9]/g, ''))}
                 />
                 {errors.licenseNumber && (
                     <Text style={styles.errorMessage}>{errors.licenseNumber}</Text>

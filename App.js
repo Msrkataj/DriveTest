@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import OnboardingComponent from './screens/OnboardingComponent';
@@ -23,6 +23,7 @@ import SpecialRequirementsDetails from './screens/SpecialRequirementsSelection';
 import WelcomeScreen from './screens/WelcomeScreen';
 import VehicleInformation from "./screens/VehicleInformation"
 import { DateAvailabilityProvider } from './screens/DateAvailabilityContext';
+import NotificationsComponent from './screens/NotificationsComponent'; // zaimportuj NotificationsComponent
 import { Text, View, StyleSheet } from 'react-native';
 import { AppRegistry, Alert } from 'react-native';
 import firebase from '@react-native-firebase/app';
@@ -32,19 +33,39 @@ const firebaseApp = firebase.app();
 
 
 const Stack = createStackNavigator();
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-    console.log('Message handled in the background!', remoteMessage);
-});
-
-// Rejestracja obsługi komunikatów, gdy aplikacja jest aktywna
-messaging().onMessage(async remoteMessage => {
-    console.log('Message received in foreground:', remoteMessage);
-    Alert.alert(remoteMessage.notification.title, remoteMessage.notification.body);
-});
-
-
 
 const App = () => {
+
+    useEffect(() => {
+        // Obsługa powiadomień przy uruchomieniu aplikacji
+        messaging()
+            .getInitialNotification()
+            .then(remoteMessage => {
+                if (remoteMessage) {
+                    console.log('App opened from notification:', remoteMessage);
+                    Alert.alert(
+                        remoteMessage.notification.title,
+                        remoteMessage.notification.body
+                    );
+                }
+            });
+
+        // Obsługa powiadomień w tle
+        messaging().setBackgroundMessageHandler(async remoteMessage => {
+            console.log('Message handled in the background!', remoteMessage);
+        });
+
+        // Obsługa powiadomień w foreground
+        const unsubscribe = messaging().onMessage(async remoteMessage => {
+            console.log('Message received in foreground:', remoteMessage);
+            Alert.alert(
+                remoteMessage.notification.title,
+                remoteMessage.notification.body
+            );
+        });
+
+        return unsubscribe; // Usuń listener przy unmountowaniu
+    }, []);
 
     return (
         <DateAvailabilityProvider>

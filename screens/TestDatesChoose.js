@@ -79,11 +79,29 @@ const TestDates = () => {
     const toggleDaySelection = (day) => {
         if (!day?.dateString) return; // Upewniamy się, że `day.dateString` jest dostępny
         const selectedDate = day.dateString; // Zachowujemy format ISO dla kalendarza
+
+        setSelectedDays((prev) => {
+            // Jeśli dzień już istnieje, usuwamy go
+            if (prev[selectedDate]) {
+                const updatedDays = { ...prev };
+                delete updatedDays[selectedDate];
+                return updatedDays;
+            }
+
+            // Jeśli liczba wybranych dni osiągnęła limit, pokazujemy alert
+            if (Object.keys(prev).length >= 5) {
+                Alert.alert('Limit Reached', 'You can only select up to 5 days.');
+                return prev;
+            }
+
+            // Dodajemy nowy dzień
+            return {
+                ...prev,
+                [selectedDate]: [], // Inicjalizujemy pustą tablicę dla godzin
+            };
+        });
+
         setCurrentDay(selectedDate); // Ustawienie bieżącego dnia
-        setSelectedDays((prev) => ({
-            ...prev,
-            [selectedDate]: prev[selectedDate] || [], // Jeśli dzień nie istnieje, inicjalizujemy go pustą tablicą
-        }));
     };
 
     const handleTimeSelect = (time) => {

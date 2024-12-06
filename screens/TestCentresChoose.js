@@ -72,9 +72,18 @@ const TestCentres = () => {
     const handleSelect = (centre) => {
         setSelectedCentres((prev) => {
             const exists = prev.some((item) => item.name === centre.name);
+
             if (exists) {
+                // Usuń centrum, jeśli już zostało wybrane
                 return prev.filter((item) => item.name !== centre.name);
             } else {
+                // Sprawdź, czy liczba wybranych centrów jest poniżej limitu
+                if (prev.length >= 3) {
+                    Alert.alert('Limit Reached', 'You can only select up to 3 test centres.');
+                    return prev; // Nie dodawaj kolejnego centrum
+                }
+
+                // Dodaj nowe centrum
                 return [...prev, { name: centre.name, postalCode: centre.postalCode }];
             }
         });
@@ -167,6 +176,23 @@ const TestCentres = () => {
                 />
                 <Icon name="search" size={20} color="#000" style={styles.searchIcon} />
             </View>
+
+            {/* Wyświetlanie wybranych centrów */}
+            {selectedCentres.length > 0 && (
+                <View style={styles.selectedCentresContainer}>
+                    <Text style={styles.selectedTitle}>Selected Centres:</Text>
+                    {selectedCentres.map((centre, index) => (
+                        <View key={index} style={styles.selectedItem}>
+                            <Text style={styles.selectedText}>
+                                {centre.name} ({centre.postalCode})
+                            </Text>
+                            <TouchableOpacity onPress={() => handleSelect(centre)}>
+                                <Icon name="times-circle" size={20} color="red" />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+            )}
             <FlatList
                 data={filteredCentres}
                 keyExtractor={(item, index) => index.toString()}
@@ -186,6 +212,7 @@ const TestCentres = () => {
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
@@ -216,6 +243,7 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
         borderRadius: 8,
         fontSize: 14,
+        color: '#000',
     },
     searchIcon: {
         position: 'absolute',

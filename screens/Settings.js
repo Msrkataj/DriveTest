@@ -32,7 +32,7 @@ const Settings = () => {
     const checkUserStatus = async () => {
       const userDataString = await AsyncStorage.getItem('userData');
       const pushNotificationSetting = await AsyncStorage.getItem('isPushNotificationsEnabled');
-
+      console.log(userDataString);
       if (!userDataString) {
         Alert.alert('Error', 'User data not found');
         return;

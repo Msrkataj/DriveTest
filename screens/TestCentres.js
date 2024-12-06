@@ -10,9 +10,7 @@ import {
     Image,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 
 const TestCentres = () => {
     const [testCentres, setTestCentres] = useState([]);
@@ -56,9 +54,18 @@ const TestCentres = () => {
     const handleSelect = (centre) => {
         setSelectedCentres((prev) => {
             const exists = prev.some((item) => item.name === centre.name);
+
             if (exists) {
+                // Usuń centrum, jeśli już zostało wybrane
                 return prev.filter((item) => item.name !== centre.name);
             } else {
+                // Sprawdź, czy liczba wybranych centrów jest poniżej limitu
+                if (prev.length >= 3) {
+                    Alert.alert('Limit Reached', 'You can only select up to 3 test centres.');
+                    return prev; // Nie dodawaj kolejnego centrum
+                }
+
+                // Dodaj nowe centrum
                 return [...prev, { name: centre.name, postalCode: centre.postalCode }];
             }
         });
@@ -175,6 +182,7 @@ const TestCentres = () => {
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {
