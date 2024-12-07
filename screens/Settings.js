@@ -190,11 +190,14 @@ const Settings = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ licenseNumber: storedUser.licenseNumber, fcmToken: token }),
+        body: JSON.stringify({
+          licenseNumber: storedUser.licenseNumber,
+          fcmToken: token,
+        }),
       });
 
       if (response.ok) {
-        console.log('FCM token saved successfully');
+        console.log('FCM token saved successfully for multiple devices');
       } else {
         console.error('Failed to save FCM token');
       }
@@ -202,6 +205,7 @@ const Settings = () => {
       console.error('Error saving FCM token:', error);
     }
   };
+
 
   const handleEmailSubmit = async () => {
     setIsModalOpen(false);

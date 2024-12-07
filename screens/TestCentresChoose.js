@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -8,7 +8,7 @@ import {
     FlatList,
     Alert,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -20,42 +20,42 @@ const TestCentres = () => {
     const [showDetails, setShowDetails] = useState({});
     const navigation = useNavigation();
 
-    useEffect(() => {
-        const fetchTestCentres = async () => {
-            const serverUrl = 'https://drive-test-3bee5c1b0f36.herokuapp.com';
+    const fetchTestCentres = async () => {
+        const serverUrl = 'https://drive-test-3bee5c1b0f36.herokuapp.com';
 
-            try {
-                const response = await fetch(`${serverUrl}/api/testCentres`);
-                const data = await response.json();
-                setTestCentres(data);
-                setFilteredCentres(data);
-            } catch (error) {
-                console.error('Error fetching test centres:', error);
-                Alert.alert('Error', 'Failed to fetch test centres');
-            }
-        };
+        try {
+            const response = await fetch(`${serverUrl}/api/testCentres`);
+            const data = await response.json();
+            setTestCentres(data);
+            setFilteredCentres(data);
+        } catch (error) {
+            console.error('Error fetching test centres:', error);
+            Alert.alert('Error', 'Failed to fetch test centres');
+        }
+    };
 
-        fetchTestCentres();
-    }, []);
-
-    useEffect(() => {
-        const fetchSavedCentres = async () => {
-            try {
-                const userData = await AsyncStorage.getItem('userData');
-                if (userData) {
-                    const parsedUserData = JSON.parse(userData);
-                    console.log('Loaded user data:', parsedUserData);
-                    if (parsedUserData.selectedCentres) {
-                        setSelectedCentres(parsedUserData.selectedCentres);
-                    }
+    const fetchSavedCentres = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('userData');
+            if (userData) {
+                const parsedUserData = JSON.parse(userData);
+                console.log('Loaded user data:', parsedUserData);
+                if (parsedUserData.selectedCentres) {
+                    setSelectedCentres(parsedUserData.selectedCentres);
                 }
-            } catch (error) {
-                console.error('Error fetching saved centres:', error);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching saved centres:', error);
+        }
+    };
 
-        fetchSavedCentres();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            // Pobieranie danych, gdy ekran jest aktywny
+            fetchTestCentres();
+            fetchSavedCentres();
+        }, [])
+    );
 
     useEffect(() => {
         const filtered = testCentres.filter((centre) => {

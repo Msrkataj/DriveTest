@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import OnboardingComponent from './screens/OnboardingComponent';
@@ -22,10 +22,14 @@ import InfoScreen from './screens/InfoScreen';
 import SpecialRequirementsDetails from './screens/SpecialRequirementsSelection';
 import WelcomeScreen from './screens/WelcomeScreen';
 import VehicleInformation from "./screens/VehicleInformation"
-import { DateAvailabilityProvider } from './screens/DateAvailabilityContext';
+import {DateAvailabilityProvider} from './screens/DateAvailabilityContext';
 import NotificationsComponent from './screens/NotificationsComponent'; // zaimportuj NotificationsComponent
-import { Text, View, StyleSheet } from 'react-native';
-import { AppRegistry, Alert } from 'react-native';
+import {Text, View, StyleSheet} from 'react-native';
+import {
+    Alert,
+    ToastAndroid,
+    Platform,
+} from 'react-native';
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
 
@@ -35,153 +39,168 @@ const firebaseApp = firebase.app();
 const Stack = createStackNavigator();
 
 const App = () => {
-
+    // Ustawianie obsługi powiadomień w tle (raz dla całej aplikacji)
     useEffect(() => {
-        // Obsługa powiadomień przy uruchomieniu aplikacji
+        messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+            console.log('Message handled in the background:', remoteMessage);
+        });
+    }, []); // Pusty array dependency - tylko raz przy starcie aplikacji
+
+    // Obsługa powiadomień w foreground
+    useEffect(() => {
+        const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+            try {
+                console.log('Message received in foreground:', remoteMessage);
+
+                if (remoteMessage?.notification?.title && remoteMessage?.notification?.body) {
+                    Alert.alert(
+                        remoteMessage.notification.title || 'Nowe powiadomienie',
+                        remoteMessage.notification.body || 'Treść powiadomienia'
+                    );
+                } else {
+                    console.warn('Odebrano powiadomienie bez danych:', remoteMessage);
+                }
+            } catch (error) {
+                console.error('Błąd podczas obsługi powiadomienia:', error);
+            }
+        });
+
+        return unsubscribe; // Wyrejestrowanie listenera przy unmountowaniu
+    }, []); // Pusty array dependency - tylko raz przy starcie aplikacji
+
+    // Obsługa powiadomień przy uruchomieniu aplikacji
+    useEffect(() => {
         messaging()
             .getInitialNotification()
-            .then(remoteMessage => {
+            .then((remoteMessage) => {
                 if (remoteMessage) {
                     console.log('App opened from notification:', remoteMessage);
                     Alert.alert(
-                        remoteMessage.notification.title,
-                        remoteMessage.notification.body
+                        remoteMessage.notification.title || 'Powiadomienie',
+                        remoteMessage.notification.body || 'Treść powiadomienia'
                     );
                 }
+            })
+            .catch((error) => {
+                console.error('Błąd przy pobieraniu initial notification:', error);
             });
-
-        // Obsługa powiadomień w tle
-        messaging().setBackgroundMessageHandler(async remoteMessage => {
-            console.log('Message handled in the background!', remoteMessage);
-        });
-
-        // Obsługa powiadomień w foreground
-        const unsubscribe = messaging().onMessage(async remoteMessage => {
-            console.log('Message received in foreground:', remoteMessage);
-            Alert.alert(
-                remoteMessage.notification.title,
-                remoteMessage.notification.body
-            );
-        });
-
-        return unsubscribe; // Usuń listener przy unmountowaniu
-    }, []);
+    }, []); // Pusty array dependency - tylko raz przy starcie aplikacji
 
     return (
         <DateAvailabilityProvider>
-        <NavigationContainer style={styles.regularText}>
-            <Stack.Navigator initialRouteName="Onboarding">
-                <Stack.Screen
-                    name="Onboarding"
-                    component={OnboardingComponent}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="Login"
-                    component={LoginComponent}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="LoginPanel"
-                    component={LoginPanel}
-                    options={{headerShown: false}}
-                />
+            <NavigationContainer style={styles.regularText}>
+                <Stack.Navigator initialRouteName="Onboarding">
+                    <Stack.Screen
+                        name="Onboarding"
+                        component={OnboardingComponent}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="Login"
+                        component={LoginComponent}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="LoginPanel"
+                        component={LoginPanel}
+                        options={{headerShown: false}}
+                    />
 
-                <Stack.Screen
-                    name="VehicleInformation"
-                    component={VehicleInformation}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="TestSelection"
-                    component={TestSelection}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="ManualBooking"
-                    component={ManualBooking}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="WelcomeScreen"
-                    component={WelcomeScreen}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="SpecialRequirementsDetails"
-                    component={SpecialRequirementsDetails}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="InfoScreen"
-                    component={InfoScreen}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="LicenseDetails"
-                    component={LicenseDetails}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="OfferSelection"
-                    component={OfferSelection}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="PremiumSuccess"
-                    component={PremiumSuccess}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="TestCentres"
-                    component={TestCentres}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="TestDates"
-                    component={TestDates}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="EmailNotification"
-                    component={EmailNotification}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="HomeModule"
-                    component={HomeModule}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="Settings"
-                    component={Settings}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="Support"
-                    component={Support}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="TestCentresChoose"
-                    component={TestCentresChoose}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="TestDatesChoose"
-                    component={TestDatesChoose}
-                    options={{headerShown: false}}
-                />
-                <Stack.Screen
-                    name="PremiumSite"
-                    component={PremiumSite}
-                    options={{headerShown: false}}
-                />
-            </Stack.Navigator>
-        </NavigationContainer>
-</DateAvailabilityProvider>
+                    <Stack.Screen
+                        name="VehicleInformation"
+                        component={VehicleInformation}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="TestSelection"
+                        component={TestSelection}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="ManualBooking"
+                        component={ManualBooking}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="WelcomeScreen"
+                        component={WelcomeScreen}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="SpecialRequirementsDetails"
+                        component={SpecialRequirementsDetails}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="InfoScreen"
+                        component={InfoScreen}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="LicenseDetails"
+                        component={LicenseDetails}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="OfferSelection"
+                        component={OfferSelection}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="PremiumSuccess"
+                        component={PremiumSuccess}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="TestCentres"
+                        component={TestCentres}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="TestDates"
+                        component={TestDates}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="EmailNotification"
+                        component={EmailNotification}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="HomeModule"
+                        component={HomeModule}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="Settings"
+                        component={Settings}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="Support"
+                        component={Support}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="TestCentresChoose"
+                        component={TestCentresChoose}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="TestDatesChoose"
+                        component={TestDatesChoose}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="PremiumSite"
+                        component={PremiumSite}
+                        options={{headerShown: false}}
+                    />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </DateAvailabilityProvider>
 
-);
+    );
 };
 const styles = StyleSheet.create({
     boldText: {

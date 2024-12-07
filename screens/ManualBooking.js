@@ -243,6 +243,9 @@ const ManualBooking = () => {
                 selectedCentres.forEach((centre) => {
                     const centerKey = `${normalizedDate}-${centre.name.trim().toLowerCase()}`;
                     const notificationData = notificationMap[centerKey];
+                    console.log('notificationData:', notificationData);
+                    console.log('centerKey:', centerKey);
+                    console.log('normalizedDate:', normalizedDate);
 
                     matchedNotifications.push({
                         date: normalizedDate,

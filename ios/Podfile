@@ -28,6 +28,7 @@ target 'DriveTest' do
 pod 'FirebaseCore', :modular_headers => true
   pod 'RNFBApp', :path => '../node_modules/@react-native-firebase/app'
   pod 'RNFBMessaging', :path => '../node_modules/@react-native-firebase/messaging'
+pod 'RNSVG', :path => '../node_modules/react-native-svg'
 
   target 'DriveTestTests' do
     inherit! :complete
