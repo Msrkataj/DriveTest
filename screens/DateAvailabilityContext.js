@@ -109,7 +109,7 @@ export const DateAvailabilityProvider = ({ children }) => {
 
             // Wyślij zapytanie do backendu
             const startResponse = await fetch(
-                'https://drive-test-3bee5c1b0f36.herokuapp.com/date',
+                'https://drive-test-3bee5c1b0f36.herokuapp.com/search',
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

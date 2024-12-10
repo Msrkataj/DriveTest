@@ -386,10 +386,10 @@ const Settings = () => {
         </TouchableOpacity>
       </View>
       <View style={styles.footer}>
-        <TouchableOpacity onPress={() => Linking.openURL('https://yourwebsite.com/privacy-policy')}>
+        <TouchableOpacity onPress={() => navigation.navigate('InfoScreen')}>
           <Text style={styles.footerLink}>Privacy Policy</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => Linking.openURL('https://yourwebsite.com/terms-conditions')}>
+        <TouchableOpacity onPress={() => navigation.navigate('Terms')}>
           <Text style={styles.footerLink}>Terms & Conditions</Text>
         </TouchableOpacity>
       </View>

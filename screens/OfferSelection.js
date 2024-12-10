@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     View,
     Text,
@@ -11,6 +11,11 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import * as RNIap from 'react-native-iap';
+const itemSkus = Platform.select({
+    android: ['premium_upgrade'], // zamień 'premium_upgrade' na Twój SKU z Google Play Console
+});
+
 
 const offers = [
     {
@@ -46,10 +51,55 @@ const OfferSelection = () => {
         setSelectedOffer(id);
     };
 
+
+    useEffect(() => {
+        const initIAP = async () => {
+            try {
+                await RNIap.initConnection();
+                // Opcjonalnie pobieranie dostępnych produktów:
+                const products = await RNIap.getProducts(itemSkus);
+                console.log('Products:', products);
+            } catch (err) {
+                console.warn(err);
+            }
+        };
+
+        initIAP();
+
+        return () => {
+            RNIap.endConnection();
+        };
+    }, []);
+
     const handleContinue = async () => {
         const selectedOfferData = offers.find((offer) => offer.id === selectedOffer);
         const isPremium = selectedOfferData.isPremium;
 
+        if (isPremium) {
+            // Użytkownik wybrał premium, więc najpierw przeprowadź płatność.
+            try {
+                // Wywołaj proces zakupu
+                const purchase = await RNIap.requestPurchase('premium_upgrade', false);
+                // Jeśli dotarliśmy tutaj, to zakup jest w trakcie realizacji lub zakończony sukcesem.
+                // react-native-iap zazwyczaj zwraca obiekt purchase z informacjami o transakcji.
+
+                // Weryfikacja zakupu: w produkcji należy zweryfikować po stronie serwera lub
+                // sprawdzić weryfikację paragonu. Na potrzeby przykładu zakładamy, że jest OK.
+
+                // Po udanej weryfikacji:
+                await updateUserPremiumStatus(isPremium);
+            } catch (error) {
+                console.error('Zakup nieudany:', error);
+                Alert.alert('Payment Error', 'Purchase failed. Please try again.');
+            }
+        } else {
+            // Jeśli nie premium, to od razu aktualizujemy status bez zakupu
+            await updateUserPremiumStatus(isPremium);
+        }
+    };
+
+// Funkcja do aktualizacji premium statusu w db i local storage
+    const updateUserPremiumStatus = async (isPremium) => {
         try {
             const userData = await AsyncStorage.getItem('userData');
 
@@ -68,7 +118,7 @@ const OfferSelection = () => {
 
             await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
 
-        const serverUrl = 'https://drive-test-3bee5c1b0f36.herokuapp.com';
+            const serverUrl = 'https://drive-test-3bee5c1b0f36.herokuapp.com';
 
             const response = await fetch(`${serverUrl}/api/updateUserPremiumStatus`, {
                 method: 'POST',
@@ -94,6 +144,7 @@ const OfferSelection = () => {
             Alert.alert('Error', 'An error occurred. Please try again.');
         }
     };
+
 
     return (
         <View style={styles.container}>

@@ -18,7 +18,9 @@ import TestCentresChoose from './screens/TestCentresChoose';
 import TestDatesChoose from './screens/TestDatesChoose';
 import PremiumSite from './screens/PremiumSite';
 import ManualBooking from './screens/ManualBooking';
-import InfoScreen from './screens/InfoScreen';
+import Terms from './screens/Terms';
+import Booking from './screens/Booking';
+import PrivacyPolicy from './screens/PrivacyPolicy';
 import SpecialRequirementsDetails from './screens/SpecialRequirementsSelection';
 import WelcomeScreen from './screens/WelcomeScreen';
 import VehicleInformation from "./screens/VehicleInformation"
@@ -32,6 +34,7 @@ import {
 } from 'react-native';
 import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
+
 
 const firebaseApp = firebase.app();
 
@@ -101,14 +104,28 @@ const App = () => {
                         options={{headerShown: false}}
                     />
                     <Stack.Screen
+                        name="PrivacyPolicy"
+                        component={PrivacyPolicy}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
                         name="LoginPanel"
                         component={LoginPanel}
                         options={{headerShown: false}}
                     />
-
                     <Stack.Screen
                         name="VehicleInformation"
                         component={VehicleInformation}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="Terms"
+                        component={Terms}
+                        options={{headerShown: false}}
+                    />
+                    <Stack.Screen
+                        name="Booking"
+                        component={Booking}
                         options={{headerShown: false}}
                     />
                     <Stack.Screen
@@ -129,11 +146,6 @@ const App = () => {
                     <Stack.Screen
                         name="SpecialRequirementsDetails"
                         component={SpecialRequirementsDetails}
-                        options={{headerShown: false}}
-                    />
-                    <Stack.Screen
-                        name="InfoScreen"
-                        component={InfoScreen}
                         options={{headerShown: false}}
                     />
                     <Stack.Screen

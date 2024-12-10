@@ -1,44 +1,75 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient'; // Importuj gradient
 import { colors, fonts } from '../styles/variables';  // Import zmiennych
+import { useNavigation } from '@react-navigation/native';
 
-const OnboardingComponent = ({ navigation }) => {
+const OnboardingComponent = () => {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          console.log('Session found:', user);
+
+          // Przekierowanie na odpowiedni ekran na podstawie danych sesji
+          if (!user.isPremium) {
+            navigation.navigate('OfferSelection');
+          } else if (!user.selectedCentres || user.selectedCentres.length === 0) {
+            navigation.navigate('TestCentres');
+          } else if (!user.availability || Object.keys(user.availability).length === 0) {
+            navigation.navigate('TestDates');
+          } else {
+            navigation.navigate('HomeModule');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
+      }
+    };
+
+    checkSession();
+  }, [navigation]);
+
   return (
-    <View style={styles.onboarding}>
-      <Image
-        source={require('../assets/woman-male-driving.png')}
-        style={styles.onboardingImage}
-        resizeMode="cover"
-      />
-      <LinearGradient
-        colors={['transparent', colors.main]} // Gradient od przezroczystego do niebieskiego
-        start={{ x: 0, y: 0 }}  // Zaczyna się u góry
-        end={{ x: 0, y: 1 }}    // Kończy się na dole
-        style={styles.onboardingMain}
-      >
-        <View style={styles.onboardingBottom}>
-          <View style={styles.onboardingText}>
-            <Text style={[styles.title, { fontFamily: fonts.bold }]}>DRIVING TEST DATES</Text>
-            <Text style={[styles.description, { color: colors.white }]}>
-              Find canceled dates at exam centers and get your license faster than ever.
-              Save time, avoid long waits and move boldly toward your goal!
-            </Text>
+      <View style={styles.onboarding}>
+        <Image
+            source={require('../assets/woman-male-driving.png')}
+            style={styles.onboardingImage}
+            resizeMode="cover"
+        />
+        <LinearGradient
+            colors={['transparent', colors.main]} // Gradient od przezroczystego do niebieskiego
+            start={{ x: 0, y: 0 }}  // Zaczyna się u góry
+            end={{ x: 0, y: 1 }}    // Kończy się na dole
+            style={styles.onboardingMain}
+        >
+          <View style={styles.onboardingBottom}>
+            <View style={styles.onboardingText}>
+              <Text style={[styles.title, { fontFamily: fonts.bold }]}>DRIVING TEST DATES</Text>
+              <Text style={[styles.description, { color: colors.white }]}>
+                Find canceled dates at exam centers and get your license faster than ever.
+                Save time, avoid long waits and move boldly toward your goal!
+              </Text>
+            </View>
+            <View style={styles.onboardingMainButton}>
+              <TouchableOpacity
+                  style={styles.onboardingButton}
+                  onPress={() => navigation.navigate('WelcomeScreen')}  // Przejście na stronę logowania
+              >
+                <Text style={[styles.buttonText, { color: colors.main }]}>Book your date</Text>
+                <View style={styles.dragHandle}>
+                  <Text style={styles.arrow}>&rarr;</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
-         <View style={styles.onboardingMainButton}>
-    <TouchableOpacity
-      style={styles.onboardingButton}
-      onPress={() => navigation.navigate('WelcomeScreen')}  // Przejście na stronę logowania
-    >
-      <Text style={[styles.buttonText, { color: colors.main }]}>Book your date</Text>
-      <View style={styles.dragHandle}>
-        <Text style={styles.arrow}>&rarr;</Text>
+        </LinearGradient>
       </View>
-    </TouchableOpacity>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
   );
 };
 

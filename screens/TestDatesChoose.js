@@ -88,11 +88,11 @@ const TestDates = () => {
                 return updatedDays;
             }
 
-            // Jeśli liczba wybranych dni osiągnęła limit, pokazujemy alert
-            if (Object.keys(prev).length >= 5) {
-                Alert.alert('Limit Reached', 'You can only select up to 5 days.');
-                return prev;
-            }
+            // // Jeśli liczba wybranych dni osiągnęła limit, pokazujemy alert
+            // if (Object.keys(prev).length >= 5) {
+            //     Alert.alert('Limit Reached', 'You can only select up to 5 days.');
+            //     return prev;
+            // }
 
             // Dodajemy nowy dzień
             return {

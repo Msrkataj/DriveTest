@@ -176,7 +176,7 @@ const HomeModule = () => {
             <View style={styles.options}>
                 <TouchableOpacity
                     style={styles.option}
-                    onPress={() => navigateTo('ManualBooking')}
+                    onPress={() => navigateTo('Booking')}
                 >
                     <View style={styles.optionContent}>
                         <Text style={styles.optionTitle}>Manual booking</Text>
