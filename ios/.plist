@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>CFBundleIdentifier</key>
+<string>com.drivetestuk</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAr0yxEFjSLLa0Q2tEgpcMq-fPY3jvIe8Y</string>
 	<key>GCM_SENDER_ID</key>
@@ -9,7 +11,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.DriveTest</string>
+	<string>com.drivetestuk</string>
 	<key>PROJECT_ID</key>
 	<string>testdrive-afbe6</string>
 	<key>STORAGE_BUCKET</key>
@@ -26,5 +28,10 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:116205312021:ios:8cdd105ec8375c24ce561c</string>
+	<key>SKAdNetworkItems</key>
+	<array> <dict>
+	<key>SKAdNetworkIdentifier</key>
+	<string>cstr6suwn9.skadnetwork</string>
+	</dict> </array>
 </dict>
 </plist>

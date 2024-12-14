@@ -7,7 +7,7 @@ import {
     StyleSheet,
     FlatList,
     Alert,
-    Image,
+    Image, BackHandler,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -19,6 +19,18 @@ const TestCentres = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showDetails, setShowDetails] = useState({});
     const navigation = useNavigation();
+
+    useEffect(() => {
+        const onBackPress = () => {
+            navigation.replace('TestCentres'); // Zawsze przekierowuj do ekranu docelowego
+            return true; // Zatrzymuje domyślne działanie przycisku "wstecz"
+        };
+
+        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        // Sprzątanie: usuń listener przy odmontowaniu komponentu
+        return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation]);
 
     useEffect(() => {
         const fetchTestCentres = async () => {

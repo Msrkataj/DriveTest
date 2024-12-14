@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "116205312021",
     "project_id": "testdrive-afbe6",
-    "storage_bucket": "testdrive-afbe6.appspot.com"
+    "storage_bucket": "testdrive-afbe6.firebasestorage.app"
   },
   "client": [
     {
@@ -45,9 +45,28 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:116205312021:android:82bf46601065a375ce561c",
+        "mobilesdk_app_id": "1:116205312021:android:f64be8ac0444e2f3ce561c",
         "android_client_info": {
-          "package_name": "com.testdrive"
+          "package_name": "com.drivetestUK"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu-YXL14ZBsAd4CX1dxPEgh9TslRVmX_w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:116205312021:android:2902961c1f1f3396ce561c",
+        "android_client_info": {
+          "package_name": "com.drivetestuk"
         }
       },
       "oauth_client": [],

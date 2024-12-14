@@ -1,14 +1,27 @@
-// screens/PremiumSuccess.js
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, BackHandler } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const PremiumSuccess = () => {
     const navigation = useNavigation();
 
+    // Funkcja obsługująca nawigację
     const handleContinue = () => {
-        navigation.navigate('TestCentres');
+        navigation.replace('TestCentres'); // Używamy replace, aby usunąć poprzedni ekran z historii
     };
+
+    // Obsługa przycisku "wstecz"
+    useEffect(() => {
+        const onBackPress = () => {
+            navigation.replace('TestCentres'); // Zawsze przekierowuj do ekranu docelowego
+            return true; // Zatrzymuje domyślne działanie przycisku "wstecz"
+        };
+
+        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        // Sprzątanie: usuń listener przy odmontowaniu komponentu
+        return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation]);
 
     return (
         <View style={styles.container}>

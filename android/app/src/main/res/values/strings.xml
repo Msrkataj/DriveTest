@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">DriveTest</string>
+    <string name="app_name">com.drivetestuk</string>
+    <string name="google_play_license_key">MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2TOAklVLKdOk58elNsPElLPpSnVp+wGhliZGurmd+p/olURQlpHCxpoCa+2wUMRWu86KOSsAXf3DG6C351/Xn5uizhypXc9DfVQ+5w7xl2DiMGbJmX3D2m0PufBgjvW4nI5V4SH3gkMjMjt/0xbtxYyCUgPVKy+DUZdDFzMmjloZeVn0E406Ip6ZfmsTfRYNC8L03YFoebdf4ewdmTaKFhGGygP049SNIQVPETHOtcohqwEnpeXqHfAYXdWF8GAE5gC1k4Ul2BlPF8ZFNgTxhu06PWA2cP60YUmq4qptGxHYk/z6Ebi2FYwax/GbvT9/EeOXjHRblUN1/69zU3TLWwIDAQAB</string>
 </resources>

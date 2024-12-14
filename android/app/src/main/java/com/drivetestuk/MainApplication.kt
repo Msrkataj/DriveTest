@@ -1,4 +1,4 @@
-package com.drivetest
+package com.drivetestuk
 
 import android.app.Application
 import com.facebook.react.PackageList

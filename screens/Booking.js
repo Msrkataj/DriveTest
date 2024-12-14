@@ -31,7 +31,8 @@ const Booking = () => {
     const [lastRefreshTime, setLastRefreshTime] = useState(null);
     const [expandedState, setExpandedState] = useState({});
     const [testCentresData, setTestCentresData] = useState([]);
-
+    const [confirmedBooking, setConfirmedBooking] = useState(null); // Aktywne potwierdzenie
+    const [selectedCentre, setSelectedCentre] = useState(null); // Tymczasowe wybrane centrum
     const hasFetchedUserData = useRef(false);
 
     useFocusEffect(
@@ -207,6 +208,29 @@ const Booking = () => {
         const options = {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'};
         return date.toLocaleDateString('en-GB', options);
     };
+    const handleOpenModal = (date, centre) => {
+        if (confirmedBooking) {
+            Alert.alert(
+                'Active Confirmation',
+                'You already have an active confirmation. Cancel it first to create a new one.',
+            );
+            return;
+        }
+        setSelectedDate(date);
+        setSelectedCentre(centre);
+        setModalVisible(true);
+    };
+    const handleConfirm = () => {
+        if (!selectedDate || !selectedCentre) {
+            Alert.alert('Error', 'Selected date or centre is missing.');
+            return;
+        }
+        setConfirmedBooking({ date: selectedDate, centre: selectedCentre });
+        setModalVisible(false);
+    };
+    const handleCancelConfirmation = () => {
+        setConfirmedBooking(null);
+    };
 
     const renderDateItem = ({item}) => {
         if (!testCentresData || testCentresData.length === 0) {
@@ -229,6 +253,10 @@ const Booking = () => {
 
             let isDateAvailable = false;
             let datesToShow = [];
+            const isConfirmed =
+                confirmedBooking &&
+                confirmedBooking.date === item.date &&
+                confirmedBooking.centre?.name === centre.name;
 
             if (testCentre && testCentre.availableDates?.length > 0) {
                 datesToShow = testCentre.availableDates.filter(ad => {
@@ -275,7 +303,12 @@ const Booking = () => {
                     <Text style={styles.NameMini}>Test Centre</Text>
 
                     <Text style={styles.date}>{formattedSelectedDate}</Text>
-
+                    {isConfirmed && (
+                        <View style={styles.confirmedContainer}>
+                            <Icon name="spinner" size={20} color="#007bff" />
+                            <Text style={styles.tooltip}>Processing... We’ll notify you when available.</Text>
+                        </View>
+                    )}
                     <View style={styles.notificationContainer}>
                         <Text style={styles.notificationText}>{notificationText}</Text>
 
@@ -330,10 +363,11 @@ const Booking = () => {
                     {userData?.isPremium ? (
                         <TouchableOpacity
                             style={styles.bookButtonContainer}
-                            onPress={() => {
-                                setSelectedDate(item.date);
-                                setModalVisible(true);
-                            }}
+                            onPress={() =>
+                                isConfirmed
+                                    ? handleCancelConfirmation()
+                                    : handleOpenModal(item.date, centre)
+                            }
                         >
                             <View style={styles.bookButton}>
                                 <Text style={styles.bookButtonText}>Book when available</Text>
@@ -464,6 +498,16 @@ const styles = StyleSheet.create({
         color: '#999',
         marginBottom: 4,
         textAlign: 'center',
+    },
+    confirmedContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    tooltip: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#007bff',
     },
     headerSubtitle: {
         fontSize: 16,

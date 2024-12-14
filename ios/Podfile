@@ -14,7 +14,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'DriveTest' do
+target 'comdrivetest' do
   config = use_native_modules!
 
   use_react_native!(
@@ -30,7 +30,7 @@ pod 'FirebaseCore', :modular_headers => true
   pod 'RNFBMessaging', :path => '../node_modules/@react-native-firebase/messaging'
 pod 'RNSVG', :path => '../node_modules/react-native-svg'
 
-  target 'DriveTestTests' do
+  target 'comdrivetestTests' do
     inherit! :complete
     # Pods for testing
   end

@@ -11,7 +11,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     [FIRApp configure];
-    self.moduleName = @"DriveTest";
+    self.moduleName = @"com.drivetestuk";
     self.initialProps = @{};
 
     // Konfiguracja centrum powiadomień dla iOS

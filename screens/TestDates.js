@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Alert,
+    Alert, BackHandler,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -25,7 +25,17 @@ const TestDates = () => {
     const handleDaySelect = (day) => {
         setSelectedDay(day.dateString);
     };
+    useEffect(() => {
+        const onBackPress = () => {
+            navigation.replace('TestCentres'); // Zawsze przekierowuj do ekranu docelowego
+            return true; // Zatrzymuje domyślne działanie przycisku "wstecz"
+        };
 
+        BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+        // Sprzątanie: usuń listener przy odmontowaniu komponentu
+        return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [navigation]);
     const handleTimeSelect = (time) => {
         setSelectedTimes((prev) => ({
             ...prev,
