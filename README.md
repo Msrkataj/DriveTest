@@ -3,6 +3,8 @@
 Funis is a web application for creating and managing events with participant lists.  
 It was designed as a simple tool for organizing private meetings, parties, and events.
 
+https://apps.apple.com/gb/app/drive-test-uk/id6738711049?platform=iphone
+
 ## 🚀 Features
 - Create events with description, date, and location.  
 - Generate invitation links for participants.  
